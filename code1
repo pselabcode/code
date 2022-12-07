@@ -1,0 +1,98 @@
+clear all;
+close all;
+
+%    p q     z         hlc(adm)
+z = [0 1 0.08+0.24j    0.00j
+     1 2 0.02+0.06j    0.06j
+     2 0 0.08+0.24j    0.00j
+     2 3 0.06+0.18j    0.04j
+     2 4 0.06+0.18j    0.04j
+     3 4 0.01+0.03j    0.02j
+     4 0 0.08+0.24j    0.00j
+    ];
+
+fb = z(:,1);
+tb = z(:,2);
+Z = z(:,3);
+hlc = z(:,4);
+y = 1./Z;
+
+nbus = max(max(fb), max(tb))+1;
+Y = zeros(nbus);
+nline = length(tb);
+for k = 1:nline
+    p = fb(k)+1;
+    q = tb(k)+1;
+    Y(p,p) = Y(p,p)+y(k)+hlc(k);
+    Y(q,q) = Y(q,q)+y(k)+hlc(k);
+    Y(p,q) = Y(p,q)-y(k);
+    Y(q,p) = Y(p,q); 
+end
+Ybus = Y(2:5, 2:5);
+
+%end
+
+clc;
+clear;
+%      Element  From   To    Z
+data=[  1        1     0    0.52
+        2        2     1    0.32
+        3        3     1    0.43
+        4        2     0    0.25
+        5        2     3    0.21];
+
+    element=data(:,1);
+    nbr=length(data(:,1));
+    from=data(:,2);
+    to=data(:,3);
+    zb=data(:,4);
+    n=max(max(from),max(to));
+    zbus=zeros(n,n);
+
+    for i=1:nbr
+        %Modification-1
+
+        if(element(i)==1)
+            zbus=zb(i)
+            continue
+        end
+
+        %Modification-2
+
+        if(from(i)~=0 && to(i)~=0)
+            if(from(i)>to(i))
+                k=to(i);
+                new=from(i);
+                for j=1:2
+                    zbus(j,new)=zbus(j,k);
+                    zbus(new,j)=zbus(k,j);
+                end
+                zbus(new,new)=zbus(k,k)+zb(i)
+                continue
+            end
+        end
+        %Modification-3
+
+        if(to(i)==0)
+            old=from(i);
+            m1=zbus(old,old)+zb(i);
+            ztemp=(1/m1)*zbus(:,old)*zbus(old,:);
+            zbus=zbus-ztemp
+            continue
+        end
+        %Modification-4
+
+        if(from(i)~=0 && to(i)~=0)
+            a=from(i);
+            b=to(i);
+            m2=zb(i)+zbus(a,a)+zbus(b,b)-(2*zbus(a,b));
+            ztemp=(1/m2)*((zbus(:,a)-(zbus(:,b)))*((zbus(a,:))-(zbus(b,:))));
+            zbus=zbus-ztemp
+            continue
+        end
+    end
+    fprintf('z-bus\n');
+    disp(zbus);
+    
+
+
